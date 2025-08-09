@@ -174,7 +174,7 @@ export default function ClientPage() {
       </main>
       <footer className="p-4 border-t mt-8">
           <div className="container mx-auto text-center text-sm text-muted-foreground">
-              Built with Firebase Studio.
+              Built by team Anveshan AI
           </div>
       </footer>
     </div>
