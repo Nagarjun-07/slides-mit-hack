@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { generateVisualizations } from '@/ai/flows/generate-visualizations';
+import { generateImageFromPrompt } from '@/ai/flows/generate-image-from-prompt';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,64 +12,34 @@ import FlashFlowLogo from '@/components/flashflow-logo';
 import { Loader2, Wand2 } from 'lucide-react';
 import type { FlashcardData } from '@/lib/types';
 
-const sampleJson = JSON.stringify(
-  [
-    {
-      "question": "What are the three main states of matter?",
-      "answer": "Solid, Liquid, and Gas. Plasma is often considered the fourth state."
-    },
-    {
-      "question": "Describe the water cycle.",
-      "answer": "The water cycle involves evaporation (water turns into vapor), condensation (vapor forms clouds), precipitation (water falls back to Earth), and collection (water gathers in bodies of water)."
-    },
-    {
-      "question": "What is the powerhouse of the cell?",
-      "answer": "The mitochondrion is known as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP), used as a source of chemical energy."
-    }
-  ],
-  null,
-  2
-);
-
 export default function ClientPage() {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [jsonInput, setJsonInput] = useState(sampleJson);
+  const [promptInput, setPromptInput] = useState('A majestic dragon soaring over a mystical forest at dawn.');
   const { toast } = useToast();
 
   const handleGenerate = async () => {
     setIsLoading(true);
     setFlashcards([]);
-    let parsedJson;
 
-    try {
-      parsedJson = JSON.parse(jsonInput);
-      if (!Array.isArray(parsedJson) || parsedJson.length === 0 || !parsedJson.every(item => typeof item.question === 'string' && typeof item.answer === 'string')) {
-        throw new Error('Invalid flashcard format. Must be an array of objects with "question" and "answer" keys.');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Please provide valid JSON.';
-      toast({ variant: 'destructive', title: 'Invalid JSON', description: errorMessage });
-      setIsLoading(false);
-      return;
+    if (!promptInput.trim()) {
+        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter a prompt.' });
+        setIsLoading(false);
+        return;
     }
-
+    
     try {
-      const flashcardPromises = parsedJson.map(async (card: { question: string; answer: string }) => {
-        const cardJsonString = JSON.stringify(card);
-        const vizData = await generateVisualizations({ flashcardData: cardJsonString });
-        return {
-          ...card,
-          visualizationDataUri: vizData.visualizationDataUri,
-          reasoning: vizData.reasoning,
-        };
-      });
-
-      const newFlashcards = await Promise.all(flashcardPromises);
-      setFlashcards(newFlashcards);
-      toast({ title: 'Success!', description: 'Your flashcards are ready.' });
+      const result = await generateImageFromPrompt({ prompt: promptInput });
+      const newFlashcard: FlashcardData = {
+        question: promptInput,
+        answer: '',
+        visualizationDataUri: result.imageDataUri,
+        reasoning: 'AI-generated image based on your prompt.',
+      };
+      setFlashcards([newFlashcard]);
+      toast({ title: 'Success!', description: 'Your slide is ready.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Generation Failed', description: 'Could not generate visualizations. Please try again.' });
+      toast({ variant: 'destructive', title: 'Generation Failed', description: 'Could not generate the image. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -87,21 +57,21 @@ export default function ClientPage() {
         <div className="grid gap-8">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Create Your Flashcards</CardTitle>
-              <CardDescription>Paste your flashcard content as JSON below, then click generate to create your slides.</CardDescription>
+              <CardTitle>Create Your Slide</CardTitle>
+              <CardDescription>Enter a text prompt below, then click generate to create your slide with an AI-generated image.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
                 <Textarea
-                  placeholder="Paste your JSON here..."
-                  className="min-h-[200px] font-code text-sm"
-                  value={jsonInput}
-                  onChange={(e) => setJsonInput(e.target.value)}
+                  placeholder="Enter your prompt here..."
+                  className="min-h-[100px] font-sans text-base"
+                  value={promptInput}
+                  onChange={(e) => setPromptInput(e.target.value)}
                   disabled={isLoading}
                 />
                 <Button onClick={handleGenerate} disabled={isLoading} className="w-full md:w-auto self-end">
                   {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 />}
-                  <span>{isLoading ? 'Generating...' : 'Generate Slides'}</span>
+                  <span>{isLoading ? 'Generating...' : 'Generate Slide'}</span>
                 </Button>
               </div>
             </CardContent>

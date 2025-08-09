@@ -33,22 +33,15 @@ export default function SlideViewer({ flashcards }: SlideViewerProps) {
       pptx.title = 'FlashFlow Presentation';
 
       for (const card of flashcards) {
-        // Question Slide
-        const qSlide = pptx.addSlide();
-        qSlide.background = { color: 'F0F8FF' };
-        qSlide.addText('Question', { x: 0.5, y: 0.25, fontSize: 18, bold: true, color: '363636' });
-        qSlide.addText(card.question, { x: 0.5, y: 1.0, w: '90%', h: '80%', fontSize: 32, valign: 'middle', align: 'center', color: '000000' });
-
-        // Answer Slide
-        const aSlide = pptx.addSlide();
-        aSlide.background = { color: 'F0F8FF' };
-        aSlide.addText('Answer', { x: 0.5, y: 0.25, fontSize: 18, bold: true, color: '363636' });
+        // Slide with text and image
+        const slide = pptx.addSlide();
+        slide.background = { color: 'F0F8FF' };
         
         if (card.visualizationDataUri) {
-          aSlide.addText(card.answer, { x: 0.5, y: 1.0, w: '45%', h: '80%', fontSize: 16, valign: 'top', color: '000000' });
-          aSlide.addImage({ data: card.visualizationDataUri, x: '52%', y: 1.0, w: '45%', h: '80%' });
+           slide.addText(card.question, { x: 0.5, y: 0.25, w: '90%', h: '20%', fontSize: 24, bold: true, color: '000000', align: 'center' });
+           slide.addImage({ data: card.visualizationDataUri, x: '10%', y: '25%', w: '80%', h: '70%' });
         } else {
-          aSlide.addText(card.answer, { x: 0.5, y: 1.0, w: '90%', h: '80%', fontSize: 24, valign: 'middle', align: 'left', color: '000000' });
+           slide.addText(card.question, { x: 0.5, y: 1.0, w: '90%', h: '80%', fontSize: 32, valign: 'middle', align: 'center', color: '000000' });
         }
       }
 
@@ -66,7 +59,7 @@ export default function SlideViewer({ flashcards }: SlideViewerProps) {
     <Card className="shadow-lg">
       <CardContent className="p-4 md:p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Your Slides</h3>
+          <h3 className="text-xl font-semibold">Your Slide</h3>
           <Button onClick={handleExport} disabled={isExporting}>
              {isExporting ? <Loader2 className="animate-spin" /> : <Download />}
             <span>{isExporting ? 'Exporting...' : 'Export to PPT'}</span>

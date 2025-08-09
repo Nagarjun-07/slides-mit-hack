@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/generate-visualizations.ts';
+import '@/ai/flows/generate-image-from-prompt.ts';

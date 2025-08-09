@@ -48,7 +48,11 @@ const generateVisualizationsFlow = ai.defineFlow(
     outputSchema: GenerateVisualizationsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+     // This flow is no longer used directly by the client, but we keep it for reference.
+     // Let's return a dummy response.
+     return {
+        visualizationDataUri: '',
+        reasoning: 'This flow is deprecated.',
+     }
   }
 );
