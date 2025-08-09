@@ -50,8 +50,19 @@ const generateImagesFromPromptsFlow = ai.defineFlow(
     outputSchema: GenerateImagesFromPromptsOutputSchema,
   },
   async ({ prompts }) => {
-    const imagePromises = prompts.map(generateImage);
-    const imageDataUris = await Promise.all(imagePromises);
+    const imageDataUris: string[] = [];
+    for (const prompt of prompts) {
+      try {
+        const imageUrl = await generateImage(prompt);
+        imageDataUris.push(imageUrl);
+      } catch (error: any) {
+        console.error(`Failed to generate image for prompt: "${prompt}"`, error);
+        // Push a placeholder or handle the error as needed.
+        // For now, we'll just skip the failed image.
+        // Or push a specific error image data URI if you have one.
+        imageDataUris.push(''); 
+      }
+    }
     
     return {
       imageDataUris,
