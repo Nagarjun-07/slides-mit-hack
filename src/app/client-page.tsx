@@ -46,11 +46,24 @@ const chunkText = (text: string, maxLength: number): string[] => {
     return chunks;
 }
 
+const processJson = (obj: any): string[] => {
+    const prompts: string[] = [];
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const value = obj[key];
+            if (typeof value !== 'object' && value !== null) {
+                prompts.push(`${key}: ${value}`);
+            }
+        }
+    }
+    return prompts;
+};
+
 
 export default function ClientPage() {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [promptInput, setPromptInput] = useState('A majestic dragon soaring over a mystical forest at dawn.\nA wizard casting a spell in a dark library.');
+  const [promptInput, setPromptInput] = useState('{\n    "name": "France",\n    "capital": "Paris",\n    "population": 67364357,\n    "area": 551695,\n    "currency": "Euro",\n    "languages": ["French"],\n    "region": "Europe",\n    "subregion": "Western Europe",\n    "flag": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Flag_of_France.svg"\n}');
   const { toast } = useToast();
 
   const handleGenerate = async () => {
@@ -74,6 +87,8 @@ export default function ClientPage() {
                 }
                 return JSON.stringify(item);
             });
+        } else if (typeof parsed === 'object' && parsed !== null) {
+            prompts = processJson(parsed);
         }
     } catch (error) {
         // Not a valid JSON, treat as multiline text
