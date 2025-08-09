@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { generateImageFromPrompt } from '@/ai/flows/generate-image-from-prompt';
+import { generateImagesFromPrompts } from '@/ai/flows/generate-images-from-prompts';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +15,7 @@ import type { FlashcardData } from '@/lib/types';
 export default function ClientPage() {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [promptInput, setPromptInput] = useState('A majestic dragon soaring over a mystical forest at dawn.');
+  const [promptInput, setPromptInput] = useState('A majestic dragon soaring over a mystical forest at dawn.\nA wizard casting a spell in a dark library.');
   const { toast } = useToast();
 
   const handleGenerate = async () => {
@@ -28,18 +28,45 @@ export default function ClientPage() {
         return;
     }
     
+    let prompts: string[] = [];
     try {
-      const result = await generateImageFromPrompt({ prompt: promptInput });
-      const newFlashcard: FlashcardData = {
-        question: promptInput,
-        answer: '',
-        visualizationDataUri: result.imageDataUri,
-        reasoning: 'AI-generated image based on your prompt.',
-      };
-      setFlashcards([newFlashcard]);
-      toast({ title: 'Success!', description: 'Your slide is ready.' });
+        const parsed = JSON.parse(promptInput);
+        if (Array.isArray(parsed)) {
+            prompts = parsed.map(item => {
+                if (typeof item === 'string') return item;
+                if (typeof item === 'object' && item !== null && (item.question || item.prompt)) {
+                    return item.question || item.prompt;
+                }
+                return JSON.stringify(item);
+            });
+        }
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Generation Failed', description: 'Could not generate the image. Please try again.' });
+        // Not a valid JSON, treat as multiline text
+    }
+
+    if (prompts.length === 0) {
+        prompts = promptInput.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+    }
+    
+    if (prompts.length === 0) {
+        toast({ variant: 'destructive', title: 'Invalid Input', description: 'No valid prompts found.' });
+        setIsLoading(false);
+        return;
+    }
+
+    try {
+      const result = await generateImagesFromPrompts({ prompts });
+      const newFlashcards: FlashcardData[] = prompts.map((prompt, index) => ({
+        question: prompt,
+        answer: '',
+        visualizationDataUri: result.imageDataUris[index],
+        reasoning: 'AI-generated image based on your prompt.',
+      }));
+
+      setFlashcards(newFlashcards);
+      toast({ title: 'Success!', description: `Generated ${newFlashcards.length} slide(s).` });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Generation Failed', description: 'Could not generate the images. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -57,13 +84,13 @@ export default function ClientPage() {
         <div className="grid gap-8">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Create Your Slide</CardTitle>
-              <CardDescription>Enter a text prompt below, then click generate to create your slide with an AI-generated image.</CardDescription>
+              <CardTitle>Create Your Slides</CardTitle>
+              <CardDescription>Enter text prompts (one per line) or a JSON array below. Then click generate to create slides with AI-generated images.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
                 <Textarea
-                  placeholder="Enter your prompt here..."
+                  placeholder="Enter your prompts here..."
                   className="min-h-[100px] font-sans text-base"
                   value={promptInput}
                   onChange={(e) => setPromptInput(e.target.value)}
@@ -71,7 +98,7 @@ export default function ClientPage() {
                 />
                 <Button onClick={handleGenerate} disabled={isLoading} className="w-full md:w-auto self-end">
                   {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 />}
-                  <span>{isLoading ? 'Generating...' : 'Generate Slide'}</span>
+                  <span>{isLoading ? 'Generating...' : 'Generate Slides'}</span>
                 </Button>
               </div>
             </CardContent>
