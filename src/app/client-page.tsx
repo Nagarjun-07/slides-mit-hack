@@ -12,6 +12,41 @@ import FlashFlowLogo from '@/components/flashflow-logo';
 import { Loader2, Wand2 } from 'lucide-react';
 import type { FlashcardData } from '@/lib/types';
 
+// Function to split a long text into smaller chunks of a maximum length
+const chunkText = (text: string, maxLength: number): string[] => {
+    const sentences = text.match(/\b[^.!?]+[.!?]+/g) || [];
+    if (sentences.length <= 1 && text.length < maxLength) {
+        return [text];
+    }
+    
+    const chunks: string[] = [];
+    let currentChunk = "";
+
+    for (const sentence of sentences) {
+        if (currentChunk.length + sentence.length > maxLength) {
+            if (currentChunk) {
+                chunks.push(currentChunk.trim());
+            }
+            currentChunk = sentence;
+        } else {
+            currentChunk += sentence;
+        }
+    }
+    if (currentChunk) {
+        chunks.push(currentChunk.trim());
+    }
+
+    // If no sentences were found, split by character length
+    if (chunks.length === 0 && text.length > 0) {
+        for (let i = 0; i < text.length; i += maxLength) {
+            chunks.push(text.substring(i, i + maxLength));
+        }
+    }
+
+    return chunks;
+}
+
+
 export default function ClientPage() {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +80,12 @@ export default function ClientPage() {
     }
 
     if (prompts.length === 0) {
-        prompts = promptInput.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+        const lines = promptInput.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+        if(lines.length === 1 && lines[0].length > 250) {
+            prompts = chunkText(lines[0], 250);
+        } else {
+            prompts = lines;
+        }
     }
     
     if (prompts.length === 0) {
@@ -85,7 +125,7 @@ export default function ClientPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>Create Your Slides</CardTitle>
-              <CardDescription>Enter text prompts (one per line) or a JSON array below. Then click generate to create slides with AI-generated images.</CardDescription>
+              <CardDescription>Enter text prompts (one per line) or a JSON array below. Then click generate to create slides with AI-generated images. Long paragraphs will be split automatically.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">

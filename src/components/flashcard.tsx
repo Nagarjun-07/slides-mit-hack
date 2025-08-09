@@ -25,7 +25,7 @@ export default function Flashcard({ question, answer, visualizationDataUri }: Fl
         <div className="absolute w-full h-full [backface-visibility:hidden]">
           <Card className="w-full h-full flex flex-col justify-center items-center p-6 shadow-xl bg-white dark:bg-slate-900">
             <CardContent className="text-center">
-              <p className="text-2xl md:text-4xl font-semibold">{question}</p>
+              <p className="text-xl md:text-2xl font-semibold">{question}</p>
             </CardContent>
             <div className="absolute bottom-4 right-4 flex items-center gap-2 text-sm text-muted-foreground">
               <RotateCcw className="h-4 w-4" />
