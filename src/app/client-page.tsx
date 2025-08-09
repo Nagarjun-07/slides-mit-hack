@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { generateImagesFromPrompts } from '@/ai/flows/generate-images-from-prompts';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -110,7 +109,20 @@ export default function ClientPage() {
     }
 
     try {
-      const result = await generateImagesFromPrompts({ prompts });
+      const response = await fetch('http://127.0.0.1:5001/generate-images-from-prompts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompts }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate images');
+      }
+
+      const result = await response.json();
+
       const newFlashcards: FlashcardData[] = prompts.map((prompt, index) => ({
         question: prompt,
         answer: '',
