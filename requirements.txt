@@ -1,2 +1,1 @@
-genkit
-genkit-plugin-google-genai
+
